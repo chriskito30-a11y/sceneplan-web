@@ -1,27 +1,24 @@
-# ScènePlan V4 — Interface scène prioritaire
+# ScènePlan V4.1 — placement libre et sélection stable
 
-Version du 13 novembre 2026. Prototype indépendant, non affilié à ArrangeUs.
+ScènePlan est un prototype indépendant de placement scénique pour ordinateur et téléphone, non affilié à ArrangeUs.
 
-## Modes de travail
+## Correctifs du 13 novembre 2026
 
-- **Placement** (mode initial) : scène agrandie, panneau de droite fermé, barre d'outils compacte, tableaux et lecture audio visibles. Timeline détaillée repliée.
-- **Synchronisation** : timeline et onde musicale affichées, édition des durées des placements et des transitions, calage manuel sur le curseur musical et réglage BPM.
-- **Focus scène** : masque les panneaux et la timeline pour agrandir la zone de placement. Retour au mode précédent par le même bouton.
+- **Cadrage stable :** un clic ou un appui sur un artiste ne redimensionne plus la scène. La barre d'actions sélection est désormais superposée.
+- **Libre par défaut :** les artistes peuvent se placer entre les lignes du quadrillage ; aucune position n'est automatiquement arrondie au relâchement.
+- **Aimantation facultative :** bouton **◌ Libre / ⌗ Aimant** toujours accessible en haut de la scène. L'attraction ne s'exerce qu'à proximité d'un repère (au plus 8 pixels et 20 % d'une case). Un mouvement au-delà reste libre.
+- **Groupes :** une correction commune préserve l'espacement entre artistes sélectionnés.
+- **Anciens projets :** passage en mode Libre à l'ouverture sans changement des positions enregistrées ; la préférence Aimant peut ensuite être activée et sauvegardée.
+- Le panneau **Scène** conserve le même réglage d'aide magnétique.
 
-Sur ordinateur, les barres d'outils et de réglages sont repliables. Sur téléphone, la barre inférieure propose Outils, Réglages, Focus, Tableau et Fichiers ; le menu Fichiers regroupe import, export, projets, annuler/refaire et aide. Le cadrage de la scène s'adapte au rapport largeur/hauteur sans déformation.
+## Fonctionnalités conservées
 
-## Démarrage
+Modes Placement / Synchronisation / Focus, zoom tactile, déplacements, modèles de placement, accessoires, formations et transitions, lecture audio et timeline, annuler/refaire, sauvegarde locale et export JSON, import expérimental de fichiers .arrus v16.
 
-Servir la racine du dépôt sur HTTPS (par exemple GitHub Pages si activé). Ouvrir `index.html`. Pour travailler en local, utiliser un serveur HTTP statique. Le navigateur conserve les projets via IndexedDB lorsqu'il est autorisé. La musique est sauvegardée séparément du JSON et reste associée au navigateur.
+La V3 reste dans `backup/v3-2026-11-13` et la V4 précédente dans `backup/v4-2026-11-13`.
 
-## Compatibilité et limites
+## Utilisation
 
-- Import/export JSON ScènePlan.
-- Import expérimental ArrangeUs `.arrus` (schéma version 16 observé).
-- Aucun export `.arrus`, aucun support `.aubkp` à ce stade.
-- Les temps musicaux sont réglés manuellement (pas de reconnaissance automatique du rythme).
-- Véritable moteur 3D et PDF avancés volontairement reportés.
+Servir la racine de ce dépôt en HTTPS (GitHub Pages si activé). Les projets et musiques sont enregistrés localement dans le navigateur. Exporter régulièrement les projets en JSON.
 
-## Validation et retour arrière
-
-La **V3** est conservée sur la branche [backup/v3-2026-11-13](https://github.com/chriskito30-a11y/sceneplan-web/tree/backup/v3-2026-11-13). La V4 ne migre ni ne supprime les données enregistrées. Voir [VALIDATION_NON_REGRESSION.md](VALIDATION_NON_REGRESSION.md) avant toute nouvelle mise à jour.
+La 3D avancée, les PDF avancés, l'export .arrus et la sauvegarde .aubkp ne sont pas encore implémentés. Voir le [rapport de non-régression](VALIDATION_NON_REGRESSION.md).

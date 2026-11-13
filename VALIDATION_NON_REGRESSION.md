@@ -1,25 +1,34 @@
-# ScènePlan V4 — Vérifications de non-régression
+# Tests de non-régression — ScènePlan V4.1
 
-**Date :** 13 novembre 2026.
+Date : 13 novembre 2026
 
-## Sauvegarde de la V3
+## Références sécurisées
 
-Branche dédiée créée **avant** la modification : `backup/v3-2026-11-13`, basée sur le commit `25b09de3a1a86cacc59e1234ff70c7dbe9918614`.
+- V3 : `backup/v3-2026-11-13`
+- V4 : `backup/v4-2026-11-13`, sauvegardée avant ce patch
 
-## Tests exécutés
+## Tests avant / après
 
-- **196 assertions V3 réussies**, 0 échec, lors de la réexécution de la suite historique V2/V3.
-- **96 assertions V4 réussies**, 0 échec : parcours PC et téléphone simulé, interface, sélection, déplacements, zoom, musique, import/export et conversion ArrangeUs.
-- **59 assertions V4 supplémentaires réussies**, 0 échec : ajout, duplication, réordonnancement et suppression de formations ; BPM, transitions, accessoires, modèles automatiques, trajectoires, fantômes, vue 3D simplifiée, dimensions, zoom tactile à deux doigts, redimensionnement/orientation.
+- Batterie historique V4 exécutée **avant** modification : **96 assertions passées** + **59 assertions avancées passées** (155/155, 0 échec).
+- Même batterie après le correctif V4.1 : **96 + 59 assertions passées** (155/155, 0 échec).
+- Batterie V4.1 complémentaire : **52 assertions passées**, PC Chromium 1440×900 et mobile simulé 390×844.
 
-**Total : 155 assertions V4 réussies sans échec**, indépendamment des 196 assertions de référence V3.
+**Total V4.1 : 207 assertions réussies, 0 échec parmi les tests exécutés.**
 
-Parcours couverts : changement de mode Placement/Synchronisation/Focus sans modification des projets ; panneau droit et outils repliables ; sélection et désélection, déplacements groupés rigides, annuler/refaire, zoom et ajustement de scène ; gestion des tableaux, édition des durées et du BPM ; curseur musical, lecture/pause WAV ; import et export JSON réimporté ; conversion du fichier ArrangeUs témoin (23 artistes, 3 formations, 69 positions).
+### Parcours contrôlés
 
-## Ce qui reste à vérifier sur appareil réel
+- Ouverture, navigation et changements de mode, scène réactive, réglages, outils.
+- Sélection/désélection sans mouvement ni modification de dimensions du SVG ; `viewBox` strictement inchangé, même avec zoom personnalisé.
+- Déplacement libre entre les repères ; annuler/refaire ; option Aimant activable/désactivable.
+- Aimantation douce seulement à moins de 8px et 20% d'une case, déplacement libre ailleurs ; groupe déplacé sans changer les écarts entre artistes.
+- Migration d'ancien projet vers Libre sans modification des coordonnées.
+- Ajout/duplication/réordonnancement/suppression de tableaux, timeline, musique WAV, BPM, trajectoires, vue 3D simplifiée, accessoires, sélection multiple, zoom et pincement, changement de taille/orientation de l'écran.
+- Import/export JSON ; conversion hors navigateur du fichier ArrangeUs v16 (23 artistes, 3 formations, 69 positions).
 
-Tests sous **Chromium** avec résolutions 1440×900, 390×844 et redimensionnements jusqu'à 844×390 ; gestes tactiles simulés. **Pas de validation sur téléphone physique**, Safari ou Firefox.
+## Limites connues
 
-L'environnement interdit la navigation directe vers `file://` et vers une origine HTTPS locale ; la persistance IndexedDB après rechargement sur serveur HTTPS, l'exécution du service worker et le déchiffrement AES `.arrus` en contexte HTTPS ne sont donc **pas revalidés en production**. L'import témoin a été contrôlé par déchiffrement local hors navigateur puis conversion JSON. Aucun projet utilisateur ni fichier APK n'a été ajouté au dépôt.
+Les tests ont été exécutés avec Chromium en environnement simulé, **pas sur le téléphone physique de l'utilisateur**. Une tentative de navigateur sur serveur HTTP localhost a échoué avec `ERR_BLOCKED_BY_ADMINISTRATOR` : la persistance IndexedDB après rechargement, le service worker et l'import natif .arrus chiffré en contexte HTTPS **n'ont donc pas été revalidés dans le navigateur final**. Aucune preuve exhaustive ne garantit l'absence de tout défaut ; seules les fonctionnalités effectivement testées sont déclarées passées.
 
-Les tests réduisent le risque de régression mais ne constituent pas une garantie absolue de couverture exhaustive.
+## Vérification à réaliser sur appareil
+
+Sélectionner/désélectionner, vérifier que la scène ne saute plus ; déplacer un artiste entre deux lignes en mode Libre ; activer Aimant et tester près puis loin d'un repère ; enregistrer puis réouvrir un projet existant.

@@ -24,13 +24,15 @@ function getLastProjectId(){try{return localStorage.getItem('sceneplan-active')}
 function setLastProjectId(id){try{localStorage.setItem('sceneplan-active',id)}catch(e){console.warn('LocalStorage bloqué, ouverture du projet maintenue',e)}}
 function updateStorageStatus(){const el=$('#saveStatus');if(el&&S.volatile){el.textContent='Mode temporaire : exporter pour conserver';el.title='Le navigateur bloque le stockage. Exportez régulièrement votre projet en JSON.'}}
 async function flushPendingSave(){if(saveSoon.timer&&S.proj){clearTimeout(saveSoon.timer);saveSoon.timer=null;S.proj.updated=Date.now();await dbput('projects',S.proj)}}
-function newProject(name='Nouveau spectacle',n=8){const dancers=Array.from({length:n},(_,i)=>({id:uid(),name:`Artiste ${i+1}`,short:`${i+1}`}));const positions={},appear={};dancers.forEach((d,i)=>{positions[d.id]={x: .15+(i%4)*.235,y:.28+Math.floor(i/4)*.37};appear[d.id]={color:COLOR[i%COLOR.length],shape:'circle'}});return {schema:1,id:uid(),name,description:'',status:'active',tags:[],created:Date.now(),updated:Date.now(),stage:{w:7,d:2.5,grid:0.5,units:'m',physicalVerified:true,snap:true,showGrid:true,wingLeft:.14,wingRight:.14,bg:null,bgFit:'cover'},dancers,forms:[{id:uid(),name:'Départ',color:'#ff477e',hold:6,transition:3,note:'',positions,appear,props:[],curves:{}}]}}
+function newProject(name='Nouveau spectacle',n=8){const dancers=Array.from({length:n},(_,i)=>({id:uid(),name:`Artiste ${i+1}`,short:`${i+1}`}));const positions={},appear={};dancers.forEach((d,i)=>{positions[d.id]={x: .15+(i%4)*.235,y:.28+Math.floor(i/4)*.37};appear[d.id]={color:COLOR[i%COLOR.length],shape:'circle'}});return {schema:1,id:uid(),name,description:'',status:'active',tags:[],created:Date.now(),updated:Date.now(),stage:{w:7,d:2.5,grid:0.5,units:'m',physicalVerified:true,snap:false,snapBehavior:2,showGrid:true,wingLeft:.14,wingRight:.14,bg:null,bgFit:'cover'},dancers,forms:[{id:uid(),name:'Départ',color:'#ff477e',hold:6,transition:3,note:'',positions,appear,props:[],curves:{}}]}}
 function form(){return S.proj.forms[S.active]}
 // Imported ArrangeUs grid coordinates are NOT certified physical metres.
 // Keep all normalized coordinates; only a deliberate user setting provides real dimensions.
 function normalizeStageUnits(project){
  const s=project?.stage;
  if(!s)return;
+ // Anciennes scènes : abandon de l'aimantation forcée sans toucher aux coordonnées.
+ if(s.snapBehavior!==2){s.snap=false;s.snapBehavior=2;}
  if(project.source?.format==='ArrangeUs .arrus' && (s.units==='cases'||s.approximateMeters===true)){
    s.units='repères';s.approximateMeters=false;s.physicalVerified=false;s.snapMode='center';
    s.grid=Math.max(.01,Number(s.grid)||1);
@@ -212,7 +214,7 @@ function fitStage(preserveZoom=true){
  applyViewport();updateViewLabel();
 }
 function resetZoom(){fitStage(false)}
-function updateViewLabel(){const el=$('#zoomValue');if(el)el.textContent=Math.round((S.fitBase?S.fitBase.w:132)/S.viewport.w*100)+' %';$$('[data-stage-tool]').forEach(b=>b.classList.toggle('active',b.dataset.stageTool===S.stageTool))}
+function updateViewLabel(){const el=$('#zoomValue');if(el)el.textContent=Math.round((S.fitBase?S.fitBase.w:132)/S.viewport.w*100)+' %';$('[data-stage-tool]').forEach(b=>b.classList.toggle('active',b.dataset.stageTool===S.stageTool));const magnet=$('#magnetToggle');if(magnet&&S.proj){const enabled=S.proj.stage.snap===true;magnet.textContent=enabled?'⌗ Aimant':'◌ Libre';magnet.classList.toggle('active',enabled);magnet.setAttribute('aria-pressed',String(enabled));magnet.title=enabled?'Aimantation douce près des repères : toucher pour revenir au placement libre':'Placement libre : toucher pour activer une aimantation douce';}}
 function zoomStage(factor,clientX,clientY){const svg=$('#stageSVG'),m=svg.getScreenCTM();if(!m)return;const p=svg.createSVGPoint();p.x=clientX??svg.getBoundingClientRect().left+svg.getBoundingClientRect().width/2;p.y=clientY??svg.getBoundingClientRect().top+svg.getBoundingClientRect().height/2;let point=p.matrixTransform(m.inverse());const v=S.viewport,base=S.fitBase||{w:132,h:96};const z=clamp(base.w/v.w*factor,1,6),w=base.w/z,h=base.h/z;S.viewport={x:point.x-(point.x-v.x)*w/v.w,y:point.y-(point.y-v.y)*h/v.h,w,h};applyViewport();updateViewLabel()}
 function clientStagePoint(x,y){const svg=$('#stageSVG'),p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse())}
 function draw3d(){const cv=$('#scene3d'),bounds=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;if(bounds.width<1||bounds.height<1)return;cv.width=Math.floor(bounds.width*dpr);cv.height=Math.floor(bounds.height*dpr);const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);const W=bounds.width,H=bounds.height;ctx.clearRect(0,0,W,H);const project=(x,y,z=0)=>{let k=.71+.26*y;return {x:W/2+(x-.5)*W*.76*k,y:H*.18+y*H*.56-z*H*.055}};
@@ -305,12 +307,28 @@ function renderInspector(){const body=$('#inspectorBody');$$('.inspector-tabs bu
  else if(S.selected.size>1){html=`<h3>${S.selected.size} artistes sélectionnés</h3><button data-act="clearSelection">Tout désélectionner</button>${field('appear.color','Couleur commune',appearance([...S.selected][0]).color,'color')}${selector('appear.shape','Forme commune',[['circle','Cercle'],['square','Carré'],['triangle','Triangle'],['diamond','Losange']],appearance([...S.selected][0]).shape)}<div class="control-row"><button data-act="flipH">Miroir horizontal</button><button data-act="flipV">Miroir vertical</button><button data-act="rotateLeft">Rotation −15°</button><button data-act="rotateRight">Rotation +15°</button><button data-act="sendBackstage">Coulisses</button><button data-act="selectColor">Même couleur</button><button data-act="selectShape">Même forme</button>${S.selected.size===2?'<button data-act="swap">Échanger</button>':''}</div><button class="btn-warn" data-act="deleteSelected">Supprimer sélection</button><p>Maintiens Maj sur ordinateur pour sélectionner plusieurs artistes. Sur mobile, touche un artiste puis un autre.</p>`}
  else html=`<h3>Placement scénique</h3><div class="hint-box">Sélectionne ou fais glisser un artiste. Ajoute un tableau pour créer les déplacements entre deux placements.</div><div class="control-row"><button data-act="selectAll">Tout sélectionner</button><button data-act="addDancer">+ Artiste</button><button data-act="presets">Placement automatique</button><button data-act="addProp">+ Accessoire</button></div><p>Chaque tableau mémorise la position, la forme et la couleur de tes artistes, ainsi que les accessoires.</p>`;
  }else if(S.tab==='formation'){const f=form();html=`<h3>Réglages du tableau ${S.active+1}</h3>${field('form.name','Nom du tableau',f.name)}${field('form.color','Couleur de repérage',f.color,'color')}<div class="inline-fields">${field('form.hold','Durée du placement (s)',f.hold,'number','min="0" step="0.5"')}${field('form.transition','Transition suivante (s)',f.transition,'number','min="0" step="0.5"')}</div><label class="field"><span>Notes de répétition</span><textarea data-field="form.note">${safe(f.note)}</textarea></label><div class="control-row"><button data-act="duplicateFormation">Dupliquer tableau</button><button data-act="copyAllForms">Appliquer positions à tous les tableaux</button><button data-act="addFormation">Tableau suivant</button><button data-act="deleteFormation" class="btn-warn">Supprimer</button></div><p>Active « Trajets » pour voir les déplacements vers le tableau suivant. Clique un artiste pour ajouter une courbe.</p>${S.selected.size===1&&S.active<S.proj.forms.length-1?'<button data-act="curve">Créer / supprimer une courbe pour l’artiste</button>':''}`}
- else{const s=S.proj.stage,u=s.units==='m'?'m':'repères';html=`<h3>Configuration de la scène</h3>${s.units!=='m'?'<div class="hint-box">Import ArrangeUs : la grille contient des repères et ne précise pas les dimensions réelles en mètres. <button data-act="setRealStage">Définir la scène en mètres</button></div>':''}<div class="inline-fields">${field('stage.w',`Ouverture (${u})`,s.w,'number','min="1" max="100" step="0.5"')}${field('stage.d',`Profondeur (${u})`,s.d,'number','min="0.5" max="100" step="0.5"')}</div>${field('stage.grid',`Pas de grille (${u})`,s.grid,'number','min="0.25" max="10" step="0.25"')}${selector('stage.showGrid','Grille visible',[['true','Oui'],['false','Non']],String(s.showGrid!==false))}${selector('stage.snap','Aimantation sur la grille',[['true','Oui'],['false','Non']],String(s.snap!==false))}${selector('stage.bgFit','Mode de fond',[['cover','Recadrer'],['contain','Contenir'],['stretch','Étirer']],s.bgFit)}<button data-act="background">Importer fond de scène</button><button data-act="clearBackground">Retirer le fond</button><button data-act="flipStage">Inverser la scène</button><div class="hint-box">${s.units!=='m'?'Le métrage de cette scène n’a pas encore été confirmé. ':''}Les cases restent carrées à l’échelle. Les positions utilisent des coordonnées proportionnelles. Modifier les dimensions de scène ne supprime pas les tableaux.</div>${field('project.description','Description du projet',S.proj.description)}${field('project.tags','Étiquettes (séparées par des virgules)',S.proj.tags.join(', '))}`}
+ else{const s=S.proj.stage,u=s.units==='m'?'m':'repères';html=`<h3>Configuration de la scène</h3>${s.units!=='m'?'<div class="hint-box">Import ArrangeUs : la grille contient des repères et ne précise pas les dimensions réelles en mètres. <button data-act="setRealStage">Définir la scène en mètres</button></div>':''}<div class="inline-fields">${field('stage.w',`Ouverture (${u})`,s.w,'number','min="1" max="100" step="0.5"')}${field('stage.d',`Profondeur (${u})`,s.d,'number','min="0.5" max="100" step="0.5"')}</div>${field('stage.grid',`Pas de grille (${u})`,s.grid,'number','min="0.25" max="10" step="0.25"')}${selector('stage.showGrid','Grille visible',[['true','Oui'],['false','Non']],String(s.showGrid!==false))}${selector('stage.snap','Aide magnétique (douce, près des repères uniquement)',[['false','Non · placement libre'],['true','Oui · aimantation douce']],String(s.snap===true))}${selector('stage.bgFit','Mode de fond',[['cover','Recadrer'],['contain','Contenir'],['stretch','Étirer']],s.bgFit)}<button data-act="background">Importer fond de scène</button><button data-act="clearBackground">Retirer le fond</button><button data-act="flipStage">Inverser la scène</button><div class="hint-box">${s.units!=='m'?'Le métrage de cette scène n’a pas encore été confirmé. ':''}Les cases restent carrées à l’échelle. Les positions utilisent des coordonnées proportionnelles. Modifier les dimensions de scène ne supprime pas les tableaux.</div>${field('project.description','Description du projet',S.proj.description)}${field('project.tags','Étiquettes (séparées par des virgules)',S.proj.tags.join(', '))}`}
  body.innerHTML=html}
 function svgPoint(e){const svg=$('#stageSVG'),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const m=svg.getScreenCTM();if(!m)return {x:0,y:0};const p=pt.matrixTransform(m.inverse()),g=stageGeometry();return {x:(p.x-g.x)/g.width,y:(p.y-g.y)/g.height}}
 // A tap and a drag must be different gestures. All thresholds are in screen pixels;
 // a few shaky touch pixels must never move or re-snap a dancer.
 function gestureThreshold(pointerType){return pointerType==='touch'?15:pointerType==='pen'?9:7}
+// Guide de proximité optionnel. Seuil en pixels, réduit à 20 % de chaque case.
+function magneticCoordinate(value,axis){
+ const st=S.proj.stage;
+ if(st.snap!==true||!Number.isFinite(value)||value<0||value>1)return value;
+ const length=axis==='x'?st.w:st.d,grid=Number(st.grid)||.5;
+ const step=grid/Math.max(.01,length);
+ if(step<=0||!Number.isFinite(step))return value;
+ const offset=(st.snapMode==='center'||st.units==='cases')?.5:0;
+ const target=(Math.round(value/step-offset)+offset)*step;
+ if(target<0||target>1)return value;
+ const g=stageGeometry(),m=$('#stageSVG').getScreenCTM();
+ const scale=axis==='x'?g.width:g.height;
+ const pixelsPerUnit=scale*(m?Math.hypot(axis==='x'?m.a:m.c,axis==='x'?m.b:m.d):1);
+ const tolerance=Math.min(step*.20,8/Math.max(pixelsPerUnit,.0001));
+ return Math.abs(target-value)<=tolerance?target:value;
+}
 function applyStageTap(drag){
  if(drag.hitDancer){
    const id=drag.hitDancer;
@@ -378,7 +396,15 @@ function pointerMove(e){
  }
  const cur=svgPoint(e),dx=cur.x-drag.start.x,dy=cur.y-drag.start.y;
  if(drag.kind==='dancer'){
-   for(const id of drag.ids){const old=drag.positions[id];form().positions[id]={x:clamp(old.x+dx,-.12,1.12),y:clamp(old.y+dy,0,1)}}
+   // Une correction commune préserve l'espacement de toute la sélection.
+   const anchor=drag.positions[drag.id]||drag.positions[drag.ids[0]];
+   let moveX=dx,moveY=dy;
+   if(anchor){
+    const ax=clamp(anchor.x+dx,-.12,1.12),ay=clamp(anchor.y+dy,0,1);
+    moveX+=magneticCoordinate(ax,'x')-ax;
+    moveY+=magneticCoordinate(ay,'y')-ay;
+   }
+   for(const id of drag.ids){const old=drag.positions[id];form().positions[id]={x:clamp(old.x+moveX,-.12,1.12),y:clamp(old.y+moveY,0,1)}}
  }else if(drag.kind==='prop'){
    const p=form().props.find(o=>o.id===drag.id);if(p){p.x=clamp(drag.position.x+dx,-.12,1.12);p.y=clamp(drag.position.y+dy,0,1)}
  }else if(drag.kind==='handle')form().curves[drag.id]={x:clamp(drag.position.x+dx,-.12,1.12),y:clamp(drag.position.y+dy,0,1)};
@@ -404,21 +430,6 @@ function pointerUp(e){
    const a=drag.start,b=drag.current||a,x0=Math.min(a.x,b.x),x1=Math.max(a.x,b.x),y0=Math.min(a.y,b.y),y1=Math.max(a.y,b.y);
    if(!drag.additive)S.selected.clear();for(const d of S.proj.dancers){const p=pos(d.id);if(p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1)S.selected.add(d.id)}S.selectedProp=null;
  }
- if(drag.kind==='dancer'&&S.proj.stage.snap!==false){
-   const st=S.proj.stage,anchor=form().positions[drag.id];
-   if(anchor&&anchor.x>=0&&anchor.x<=1&&anchor.y>=0&&anchor.y<=1){
-    const snap=(v,scale)=>{const c=v*scale/st.grid;return (st.snapMode==='center'||st.units==='cases')?(Math.round(c-.5)+.5)*st.grid/scale:Math.round(c)*st.grid/scale};
-    // Snap the whole group as a rigid block. Previously each artist snapped
-    // individually, damaging their relative spacing after a group move.
-    if(drag.ids.length>1){
-     const dx=snap(anchor.x,st.w)-anchor.x,dy=snap(anchor.y,st.d)-anchor.y;
-     const pts=drag.ids.map(id=>form().positions[id]).filter(Boolean);
-     const sx=clamp(dx,Math.max(...pts.map(p=>-.12-p.x)),Math.min(...pts.map(p=>1.12-p.x)));
-     const sy=clamp(dy,Math.max(...pts.map(p=>-p.y)),Math.min(...pts.map(p=>1-p.y)));
-     pts.forEach(p=>{p.x+=sx;p.y+=sy});
-    }else{anchor.x=clamp(snap(anchor.x,st.w),0,1);anchor.y=clamp(snap(anchor.y,st.d),0,1)}
-   }
- }
  if(drag.before&&JSON.stringify(S.proj)!==drag.before){S.undo.push(drag.before);if(S.undo.length>90)S.undo.shift();S.redo=[];saveSoon()}
  S.drag=null;render();
 }
@@ -432,7 +443,7 @@ function addProp(shape='rect'){mutate(()=>{const p={id:uid(),shape,x:.5,y:.5,w:.
 function delSelection(){if(S.selectedProp){mutate(()=>{form().props=form().props.filter(p=>p.id!==S.selectedProp);S.selectedProp=null});return}if(!S.selected.size)return;if(!confirm(`Supprimer ${S.selected.size} artiste(s) de toute la chorégraphie ?`))return;mutate(()=>{S.proj.dancers=S.proj.dancers.filter(d=>!S.selected.has(d.id));for(let f of S.proj.forms){for(let id of S.selected){delete f.positions[id];delete f.appear[id];delete f.curves[id]}}S.selected.clear()})}
 function preset(mode){let ids=S.selected.size?[...S.selected]:S.proj.dancers.map(d=>d.id),n=ids.length;if(!n)return;mutate(()=>{ids.forEach((id,i)=>{let x=.5,y=.5,t=n===1?.5:i/(n-1);if(mode==='line'){x=.1+.8*t;y=.5}else if(mode==='rows'){const cols=Math.ceil(Math.sqrt(n*1.6));x=.13+.74*(i%cols)/Math.max(1,cols-1);y=.17+.65*Math.floor(i/cols)/Math.max(1,Math.ceil(n/cols)-1)}else if(mode==='circle'){x=.5+.33*Math.cos(-Math.PI/2+2*Math.PI*i/n);y=.5+.37*Math.sin(-Math.PI/2+2*Math.PI*i/n)}else if(mode==='arc'){x=.5+.37*Math.cos(Math.PI+Math.PI*t);y=.35+.38*Math.sin(Math.PI+Math.PI*t)}else if(mode==='v'){x=.13+.74*t;y=.17+.67*(1-2*Math.abs(t-.5))}else if(mode==='diagonal'){x=.12+.76*t;y=.2+.6*t}else if(mode==='columns'){x=.2+.6*Math.floor(i/Math.ceil(n/3))/Math.max(1,Math.ceil(n/Math.ceil(n/3))-1);y=.15+.7*(i%Math.ceil(n/3))/Math.max(1,Math.ceil(n/3)-1)}form().positions[id]={x,y}})})}
 function groupTransform(kind){if(!S.selected.size)return;mutate(()=>{const ids=[...S.selected],center={x:ids.reduce((a,id)=>a+pos(id).x,0)/ids.length,y:ids.reduce((a,id)=>a+pos(id).y,0)/ids.length};for(let id of ids){let p=pos(id),x=p.x-center.x,y=p.y-center.y;if(kind==='h')x=-x;if(kind==='v')y=-y;if(kind==='left'||kind==='right'){const a=(kind==='left'?-15:15)*Math.PI/180,c=Math.cos(a),s=Math.sin(a);[x,y]=[x*c-y*s,x*s+y*c]}form().positions[id]={x:clamp(center.x+x,-.12,1.12),y:clamp(center.y+y,0,1)}}})}
-function handleEdit(key,value){if(['form.hold','form.transition'].includes(key))stopPlay();mutate(()=>{const [group,prop]=key.split('.');if(group==='form'){form()[prop]=['hold','transition'].includes(prop)?Math.max(0,Number(value)||0):value}else if(group==='stage'){S.proj.stage[prop]=['w','d','grid'].includes(prop)?Math.max(prop==='d'?.5:.25,Number(value)||1):['snap','showGrid'].includes(prop)?value==='true':value}else if(group==='project'){if(prop==='tags')S.proj.tags=value.split(',').map(x=>x.trim()).filter(Boolean);else S.proj[prop]=value}else if(group==='dancer'){const d=S.proj.dancers.find(x=>x.id===[...S.selected][0]);if(d)d[prop]=prop==='short'?value.slice(0,3):value}else if(group==='appear'){for(let id of S.selected){form().appear[id]??={color:'#ff477e',shape:'circle'};form().appear[id][prop]=value}}else if(group==='pos'){const d=[...S.selected][0];form().positions[d][prop]=clamp((Number(value)||0)/100,prop==='x'?-.12:0,prop==='x'?1.12:1)}else if(group==='prop'){const o=form().props.find(x=>x.id===S.selectedProp);if(!o)return;o[prop]=['w','h'].includes(prop)?Math.max(.01,(Number(value)||1)/100):['rotation','opacity'].includes(prop)?Number(value):value}})}
+function handleEdit(key,value){if(['form.hold','form.transition'].includes(key))stopPlay();mutate(()=>{const [group,prop]=key.split('.');if(group==='form'){form()[prop]=['hold','transition'].includes(prop)?Math.max(0,Number(value)||0):value}else if(group==='stage'){S.proj.stage[prop]=['w','d','grid'].includes(prop)?Math.max(prop==='d'?.5:.25,Number(value)||1):['snap','showGrid'].includes(prop)?value==='true':value;if(prop==='snap')S.proj.stage.snapBehavior=2}else if(group==='project'){if(prop==='tags')S.proj.tags=value.split(',').map(x=>x.trim()).filter(Boolean);else S.proj[prop]=value}else if(group==='dancer'){const d=S.proj.dancers.find(x=>x.id===[...S.selected][0]);if(d)d[prop]=prop==='short'?value.slice(0,3):value}else if(group==='appear'){for(let id of S.selected){form().appear[id]??={color:'#ff477e',shape:'circle'};form().appear[id][prop]=value}}else if(group==='pos'){const d=[...S.selected][0];form().positions[d][prop]=clamp((Number(value)||0)/100,prop==='x'?-.12:0,prop==='x'?1.12:1)}else if(group==='prop'){const o=form().props.find(x=>x.id===S.selectedProp);if(!o)return;o[prop]=['w','h'].includes(prop)?Math.max(.01,(Number(value)||1)/100):['rotation','opacity'].includes(prop)?Number(value):value}})}
 function openModal(title,html){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=html;$('#modal').classList.remove('hidden')}
 function closeModal(){$('#modal').classList.add('hidden')}
 async function showProjects(){try{await flushPendingSave();S.allProjects=await dball('projects');renderProjectModal()}catch(e){console.error(e);alert('Impossible d’afficher les projets : '+e.message)}}
@@ -506,6 +517,7 @@ function handleAction(act,b){switch(act){case'home':showProjects();break;case'op
  case'copyAllForms':if(!confirm('Appliquer les positions et apparences de ce tableau à tous les autres ?'))break;mutate(()=>{const src=clone(form());for(let i=0;i<S.proj.forms.length;i++)if(i!==S.active){S.proj.forms[i].positions=clone(src.positions);S.proj.forms[i].appear=clone(src.appear)}});break;
  case'nudgeLeft':shiftSelection('left');break;case'nudgeRight':shiftSelection('right');break;case'nudgeUp':shiftSelection('up');break;case'nudgeDown':shiftSelection('down');break;case'alignMenu':showAlignMenu();break;
  case'zoomIn':zoomStage(1.3);break;case'zoomOut':zoomStage(1/1.3);break;case'zoomReset':resetZoom();break;
+ case'toggleMagnet':mutate(()=>{S.proj.stage.snap=S.proj.stage.snap!==true;S.proj.stage.snapBehavior=2});break;
  case'stageMove':S.stageTool='move';updateViewLabel();break;case'stageSelect':S.stageTool='select';updateViewLabel();break;
  case'sendBackstage':mutate(()=>{[...S.selected].forEach((id,i)=>{form().positions[id]={x:-.09,y:clamp(.1+(i%10)*.08,0,1)}})});break;
  case'selectColor':case'selectShape':{const sel=[...S.selected].map(id=>appearance(id)[act==='selectColor'?'color':'shape']);S.selected=new Set(S.proj.dancers.filter(d=>sel.includes(appearance(d.id)[act==='selectColor'?'color':'shape'])).map(d=>d.id));render();break}

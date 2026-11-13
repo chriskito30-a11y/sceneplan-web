@@ -146,3 +146,9 @@
 @media(min-width:741px) and (max-width:1100px){.header .head-btn .desktop{display:none}.header .project-name{max-width:16vw}.header{gap:5px}}
 
 @media(max-width:740px){.header .grow{display:none}.header .layout-modes{margin-left:auto;flex:1;justify-content:stretch}.header .layout-modes button{flex:1;text-align:center;padding:7px 4px}.header #focusToggle{flex:0 0 auto}}
+
+/* V4.1 : la sélection ne modifie plus la hauteur du SVG ni son cadrage. */
+.stage-shell .selection-quickbar{position:absolute;z-index:5;left:50%;bottom:26px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 12px);border:1px solid #455678;border-radius:12px;box-shadow:0 4px 22px #050916aa;background:#131e35ed;}
+@media(max-width:740px){.stage-shell .selection-quickbar{bottom:19px;}}
+#magnetToggle{white-space:nowrap}
+@media(max-width:740px){#magnetToggle{font-size:9px;padding:5px 4px}}
