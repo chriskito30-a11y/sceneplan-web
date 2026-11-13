@@ -46,3 +46,103 @@
 .selection-quickbar button:active{background:#4b6ea2}
 .selection-quickbar button:disabled{opacity:.36;cursor:not-allowed}
 @media(max-width:740px){.selection-quickbar{justify-content:flex-start;gap:4px;padding:4px}.selection-quickbar span{font-size:10px}.selection-quickbar button{min-width:30px;min-height:34px;padding:3px 6px}}
+
+/* V4 — Surface de travail prioritaire et modes Placement / Synchronisation / Focus */
+.layout-modes{display:flex;gap:4px;padding:3px;background:#0b1122;border:1px solid var(--line);border-radius:12px}
+.layout-modes button{padding:7px 11px;border:0;background:transparent;color:#c1c9dc;font-size:12px;white-space:nowrap}
+.layout-modes button.active{background:#30415e;color:#fff}
+.focus-btn[aria-pressed="true"]{border-color:var(--pink);color:var(--pink)}
+.workspace{grid-template-columns:56px minmax(0,1fr);min-height:0;height:calc(100dvh - 91px)}
+.workspace.inspector-visible{grid-template-columns:56px minmax(0,1fr) 290px}
+.tools{padding:6px 2px;gap:2px}
+.tools button{width:48px;min-height:42px;padding:8px 2px}
+.tools button strong{font-size:23px}
+.tools button span{display:none}
+.tools-caption{display:none}
+.inspector{display:none}
+.inspector-visible .inspector{display:flex}
+.inspector-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px 0;font-size:12px;color:#c5cee2}
+.inspector-bar button{padding:2px 7px}
+/* Base: timeline compacte. Les réglages restent accessibles via Synchronisation */
+.layout-placement .timeline-editor,.layout-placement .timing-disclosure,.layout-placement .waveform,.layout-placement .music-controls{display:none}
+.layout-placement .timeline{padding:6px 10px}
+.layout-placement .timeline-head{margin-bottom:3px}
+.layout-placement .formation-strip{padding:1px 0 5px}
+.layout-placement .formation-pill{padding:5px 9px;min-height:42px}
+.layout-placement .formation-pill .tinybar{margin-top:3px}
+.layout-placement .audio-line{min-height:30px}
+.layout-placement .play{padding:6px 12px}
+.layout-sync .timeline{max-height:min(45dvh,405px);overflow-y:auto;min-height:0;scrollbar-width:thin}
+.layout-sync .stage-shell{min-height:170px}
+.layout-focus .inspector,.layout-focus .tools,.layout-focus .timeline,.layout-focus .hint{display:none!important}
+.layout-focus{grid-template-columns:minmax(0,1fr)!important}
+.layout-focus .stage-shell{min-height:0}
+.layout-focus .topline{height:42px}
+.layout-focus .stage-legend{padding:3px}
+.stage-shell .scene-surface{min-height:0}
+/* Panneau outils repliable sur PC */
+@media (min-width:741px){
+ .workspace.tools-visible .tools{display:none}
+ .workspace.tools-visible{grid-template-columns:minmax(0,1fr)}
+ .workspace.tools-visible.inspector-visible{grid-template-columns:minmax(0,1fr) 290px}
+ .workspace.tools-visible .inspector{display:flex}
+ .workspace.layout-focus.tools-visible{grid-template-columns:minmax(0,1fr)!important}
+}
+@media (min-width:741px) and (max-width:1200px){
+ .layout-modes button{padding:7px 8px}
+ .workspace.inspector-visible{grid-template-columns:52px minmax(0,1fr) 255px}
+ .workspace.tools-visible.inspector-visible{grid-template-columns:minmax(0,1fr) 255px}
+}
+@media (max-width:740px){
+ .header{height:52px;gap:3px;padding:0 5px}
+ .header .sep,.header .project-name{display:none}
+ .brand{font-size:14px}
+ .layout-modes{flex:1;justify-content:center;min-width:0;padding:2px;gap:1px}
+ .layout-modes button{font-size:11px;padding:7px 5px;min-width:0}
+ .focus-btn{padding:6px 8px}
+ .header #toolsToggle,.header #inspectorToggle{display:none}
+ .header [data-act="undo"],.header [data-act="redo"]{display:none}
+ .header .head-btn{padding:6px 6px;font-size:12px}
+ .workspace,.workspace.inspector-visible,.workspace.tools-visible,.workspace.tools-visible.inspector-visible{height:calc(100dvh - 110px);min-height:0;grid-template-columns:minmax(0,1fr)}
+ .tools{display:none;position:fixed;z-index:34;top:52px;left:0;bottom:39px;width:min(255px,80vw);padding:10px;gap:3px;flex-direction:row;flex-wrap:wrap;align-content:flex-start;align-items:stretch;background:#111c30;box-shadow:0 0 0 9999px #0008;border-right:1px solid #546079;overflow-y:auto}
+ .tools-visible .tools{display:flex}
+ .tools .tools-caption{width:100%;display:flex;align-items:center;justify-content:space-between;padding:4px 8px;font-weight:700}
+ .tools button{min-height:60px;width:calc(50% - 4px);border-color:var(--line);padding:8px 3px}
+ .tools button span{display:block;font-size:11px}
+ .tools .tool-rule{display:none}
+ .tools .tools-caption button{min-height:30px;width:auto;padding:4px 9px}
+ .inspector{display:none;position:fixed;z-index:32;left:0;right:0;top:auto;bottom:39px;height:min(75dvh,670px);min-height:260px;max-height:calc(100dvh - 65px);border:1px solid #485575;border-radius:18px 18px 0 0;box-shadow:0 0 0 9999px #0009}
+ .inspector-visible .inspector{display:flex}
+ .inspector.open{display:flex}
+ .inspector-body{flex:1;overflow-y:auto;padding-bottom:30px}
+ .mobile-inspector-bar{height:39px;justify-content:space-around;gap:2px}
+ .mobile-inspector-bar button{font-size:10px;padding:6px 5px;white-space:nowrap}
+ .foot{height:19px}
+ .layout-placement .timeline{padding:4px}
+ .layout-placement .timeline-head button{display:none}
+ .layout-placement .formation-strip{gap:5px;padding-bottom:3px}
+ .layout-placement .formation-pill{min-width:73px;min-height:37px;padding:4px 5px}
+ .layout-placement .formation-pill .small{font-size:8px}
+ .layout-sync .timeline{max-height:46dvh}
+ .layout-sync .stage-shell{min-height:145px}
+ .layout-focus .topline{height:38px}
+ .layout-focus .stage-shell{min-height:0}
+ .layout-focus .mobile-inspector-bar{display:flex}
+ .layout-focus .tools{display:none!important}
+}
+@media(max-width:365px){.layout-modes button{font-size:10px;padding:5px 3px}.brand{font-size:12px}.mobile-inspector-bar button{font-size:9px}}
+
+/* La barre de zoom participe au flux afin de ne pas masquer « FOND DE SCÈNE ». */
+.stage-view-tools{position:relative;top:auto;left:auto;transform:none;align-self:center;flex-shrink:0;margin:6px auto 0}
+@media(max-width:740px){
+ .header>.head-btn:not(.focus-btn){display:none}
+ .header #focusToggle{display:block}
+ .header .layout-modes{min-width:0}
+ .header .layout-modes button{font-size:11px;padding:7px 5px;white-space:nowrap}
+ .header .brand{min-width:89px}
+ .mobile-inspector-bar button{flex:1;min-width:0}
+ .stage-view-tools{margin:4px auto 0}
+}
+@media(min-width:741px) and (max-width:1100px){.header .head-btn .desktop{display:none}.header .project-name{max-width:16vw}.header{gap:5px}}
+
+@media(max-width:740px){.header .grow{display:none}.header .layout-modes{margin-left:auto;flex:1;justify-content:stretch}.header .layout-modes button{flex:1;text-align:center;padding:7px 4px}.header #focusToggle{flex:0 0 auto}}

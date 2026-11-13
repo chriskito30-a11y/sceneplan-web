@@ -6,13 +6,20 @@
  <button class="brand" data-act="home" title="Bibliothèque de projets"><span class="brand-icon">✦</span><span>Scène<span class="accent">Plan</span></span></button>
  <span class="sep"></span><button class="project-name" id="projectName" data-act="renameProject" title="Renommer le projet">Placement spectacle</button>
  <span class="grow"></span>
+ <nav class="layout-modes" aria-label="Mode de travail">
+  <button data-act="layoutPlacement" id="modePlacement" class="active" aria-pressed="true" title="Priorité à la scène">▦ <span>Placement</span></button>
+  <button data-act="layoutSync" id="modeSync" aria-pressed="false" title="Afficher la timeline détaillée">♫ <span>Synchronisation</span></button>
+ </nav>
+ <button class="head-btn focus-btn" id="focusToggle" data-act="toggleFocus" aria-pressed="false" title="Agrandir la scène et masquer les panneaux">⛶ <span class="desktop">Focus scène</span></button>
+ <button class="head-btn" id="toolsToggle" data-act="toggleTools" aria-expanded="false" title="Afficher les outils">☰ <span class="desktop">Outils</span></button>
+ <button class="head-btn inspector-toggle" id="inspectorToggle" data-act="inspector" aria-expanded="false" title="Afficher les réglages">☷ <span class="desktop">Réglages</span></button>
  <button class="head-btn" data-act="openFile" title="Importer un projet .arrus ou JSON">⇧ <span class="desktop">Ouvrir un fichier</span></button><button class="head-btn" data-act="home" title="Tous les projets">▦ <span class="desktop">Projets</span></button>
  <button class="head-btn" data-act="undo" title="Annuler (Ctrl+Z)">↶</button><button class="head-btn" data-act="redo" title="Rétablir (Ctrl+Maj+Z)">↷</button>
  <button class="head-btn" data-act="export" title="Exporter le projet">⇩ <span class="desktop">Exporter</span></button>
  <button class="head-btn" data-act="help" title="Aide">?</button>
 </header>
-<div class="workspace">
- <aside class="tools" aria-label="Outils de scène">
+<div class="workspace layout-placement" id="workspace">
+ <aside class="tools" id="tools" aria-label="Outils de scène"><div class="tools-caption">Outils <button data-act="toggleTools" aria-label="Fermer les outils">✕</button></div>
   <button data-act="addDancer" title="Ajouter un artiste"><strong>＋</strong><span>Artiste</span></button>
   <button data-act="addFormation" title="Nouvelle formation"><strong>▦</strong><span>Tableau</span></button>
   <button data-act="addProp" title="Ajouter un accessoire"><strong>◇</strong><span>Accessoire</span></button>
@@ -37,9 +44,9 @@
    <div class="music-controls"><label>Tempo (BPM) <input id="bpmInput" type="number" min="30" max="280" step="1" value="120"></label><label><input id="beatSnap" type="checkbox"> Calage des durées sur les temps</label><span>Le BPM cale les ajustements, pas les mouvements automatiquement. Glisse les poignées ⋮ ou utilise les boutons ci-dessus.</span></div>
   </section>
  </main>
- <aside class="inspector" id="inspector"><div class="inspector-tabs"><button data-tab="selection" class="active">Sélection</button><button data-tab="formation">Tableau</button><button data-tab="stage">Scène</button></div><div id="inspectorBody" class="inspector-body"></div></aside>
+ <aside class="inspector" id="inspector"><div class="inspector-bar"><strong>Réglages</strong><button data-act="closeInspector" title="Fermer le panneau">✕</button></div><div class="inspector-tabs"><button data-tab="selection" class="active">Sélection</button><button data-tab="formation">Tableau</button><button data-tab="stage">Scène</button></div><div id="inspectorBody" class="inspector-body"></div></aside>
 </div>
-<div class="mobile-inspector-bar"><button data-act="inspector">☷ Modifier / Paramètres</button><button data-act="toggle3d">⬡ 2D/3D</button><button data-act="addFormation">＋ Tableau</button></div>
+<div class="mobile-inspector-bar"><button data-act="toggleTools">☰ Outils</button><button data-act="inspector">☷ Réglages</button><button data-act="toggleFocus">⛶ Focus</button><button data-act="addFormation">＋ Tableau</button><button data-act="filesMenu">⋯ Fichiers</button></div>
 <footer class="foot"><span>ScènePlan · prototype indépendant, non affilié à ArrangeUs</span><span id="footerCount"></span></footer>
 </div>
 <div class="modal-backdrop hidden" id="modal" role="dialog" aria-modal="true"><div class="modal"><div class="modal-head"><h2 id="modalTitle">Projets</h2><button id="modalClose" class="close" data-act="closeModal">✕</button></div><div id="modalBody"></div></div></div>

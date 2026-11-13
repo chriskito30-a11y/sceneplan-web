@@ -1,37 +1,25 @@
-# Validation de non-régression — ScènePlan V3
+# ScènePlan V4 — Vérifications de non-régression
 
-Date : 13 novembre 2026
+**Date :** 13 novembre 2026.
 
-## Résultats des tests automatisés
+## Sauvegarde de la V3
 
-- **196 assertions réussies, 0 échec** dans la suite qui rejoue des gestes et parcours sur l'ancienne V2 **et** la V3, en deux tailles de navigateur Chromium (ordinateur 1440 × 900, téléphone simulé 390 × 844).
-- **14 assertions supplémentaires réussies** : glissement d'une poignée avec évènement tactile à un doigt, annulation, clic sur la forme d'onde, conversion du fichier ArrangeUs original, lecture sonore effective avec curseur synchronisé, pause, export JSON lisible.
-- **Total : 210 assertions réussies, 0 échec**, dont des vérifications dupliquées volontairement entre les versions pour la comparaison.
+Branche dédiée créée **avant** la modification : `backup/v3-2026-11-13`, basée sur le commit `25b09de3a1a86cacc59e1234ff70c7dbe9918614`.
 
-## Fonctions historiques contrôlées en V2 et V3
+## Tests exécutés
 
-- Initialisation, projets et accès à l'écran d'ouverture, réouverture du projet édité.
-- Dimensions 7 × 2,5 m et proportions de la grille, conservation du mode « repères » sur le projet importé.
-- Dessin des artistes, sélection / désélection, sélection groupée avec Maj sur PC ou appui tactile, déplacement rigide de groupe, annuler/refaire, zoom.
-- Ajout / duplication de formations, navigation et changement de tableau.
-- Basculer trajectoires, fantômes, vue 3D simplifiée, modèles, bibliothèque, modale.
-- Import JSON du projet ArrangeUs converti (23 artistes, 3 tableaux) ; lecture du schéma déchiffré d'un fichier `.arrus` fourni (69 positions), mais pas import AES en navigateur sécurisé complet.
-- Chargement d'un WAV original de test, calcul de sa durée, lecture effective, mise en pause et export JSON.
+- **196 assertions V3 réussies**, 0 échec, lors de la réexécution de la suite historique V2/V3.
+- **96 assertions V4 réussies**, 0 échec : parcours PC et téléphone simulé, interface, sélection, déplacements, zoom, musique, import/export et conversion ArrangeUs.
+- **59 assertions V4 supplémentaires réussies**, 0 échec : ajout, duplication, réordonnancement et suppression de formations ; BPM, transitions, accessoires, modèles automatiques, trajectoires, fantômes, vue 3D simplifiée, dimensions, zoom tactile à deux doigts, redimensionnement/orientation.
 
-## Nouveautés contrôlées
+**Total : 155 assertions V4 réussies sans échec**, indépendamment des 196 assertions de référence V3.
 
-- Edition du temps fixe et des transitions par boutons, champ numérique, synchronisation sur la position du curseur, gestuelle sur poignée tactile, respect de l'historique annuler/refaire.
-- Prévisualisation des positions intermédiaires sans lecture active, changement de tableau au fil du curseur, maintien de la sélection du tableau à régler lorsqu'on cherche un instant au-delà de sa durée actuelle.
-- Coherence panneau de timing / réglages de tableau, calage BPM 120 et 100, ajustement précis des transitions, waveform tactile, curseur de lecture.
-- Panneau de timing mobile replié et dépliable ; compatibilité de l'UI bureau.
+Parcours couverts : changement de mode Placement/Synchronisation/Focus sans modification des projets ; panneau droit et outils repliables ; sélection et désélection, déplacements groupés rigides, annuler/refaire, zoom et ajustement de scène ; gestion des tableaux, édition des durées et du BPM ; curseur musical, lecture/pause WAV ; import et export JSON réimporté ; conversion du fichier ArrangeUs témoin (23 artistes, 3 formations, 69 positions).
 
-## Limites et périmètre
+## Ce qui reste à vérifier sur appareil réel
 
-1. Les scripts sont exercés dans Chromium via insertion de l'HTML dans une page de test isolée : l'environnement bloque la navigation directe vers `file://` ou vers une origine HTTPS de test. La persistance IndexedDB et le déchiffrement du `.arrus` **dans la webapp servie sur HTTPS** ne sont donc **pas revalidés en conditions réelles**.
-2. Les comportements tactiles sont testés par navigateur Chromium configuré comme mobile, avec évènements tactiles ; **pas sur le téléphone Android de l'utilisateur**.
-3. Tous les comportements historiques ne font pas l'objet d'une preuve exhaustive ; les assertions couvrent les principaux parcours et les régressions déjà signalées. « 100 % équivalent ArrangeUs » n'est pas revendiqué.
-4. L'export `.arrus`, les sauvegardes `.aubkp`, la vraie 3D et les PDF avancés ne sont pas livrés. Ils restent séparés des corrections de timeline.
+Tests sous **Chromium** avec résolutions 1440×900, 390×844 et redimensionnements jusqu'à 844×390 ; gestes tactiles simulés. **Pas de validation sur téléphone physique**, Safari ou Firefox.
 
-## Décision
+L'environnement interdit la navigation directe vers `file://` et vers une origine HTTPS locale ; la persistance IndexedDB après rechargement sur serveur HTTPS, l'exécution du service worker et le déchiffrement AES `.arrus` en contexte HTTPS ne sont donc **pas revalidés en production**. L'import témoin a été contrôlé par déchiffrement local hors navigateur puis conversion JSON. Aucun projet utilisateur ni fichier APK n'a été ajouté au dépôt.
 
-**Candidate à test réel sur téléphone**. Ne pas écraser une précédente sauvegarde sans export préalable. Conserver la V2 pour retour arrière. La validation finale nécessite un essai utilisateur sur l'appareil et, à terme, un contrôle en hébergement HTTPS.
+Les tests réduisent le risque de régression mais ne constituent pas une garantie absolue de couverture exhaustive.
